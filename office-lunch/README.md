@@ -70,3 +70,14 @@ src/
 
 Khi làm backend, thay các hàm trong `src/lib/store.ts` và `src/lib/evaluation.ts` bằng truy vấn Teradata/Qdrant
 và kết quả chạy thật. Route và UI giữ nguyên.
+
+## Docker Compose từ thư mục gốc repo
+
+```bash
+cd ..
+docker compose up -d --build office-lunch
+```
+
+Mở http://localhost:3000. Xem [README gốc](../README.md) để cấu hình cổng,
+kiểm tra kết nối Teradata sandbox và chạy Qdrant tùy chọn.
+`/api/health` báo trạng thái web cùng `dataMode: mock`; không kiểm tra database.
