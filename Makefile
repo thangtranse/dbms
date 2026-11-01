@@ -7,7 +7,7 @@ build:
 	docker compose --profile teradata build
 
 up:
-	docker compose up -d qdrant
+	docker compose up -d --build office-lunch qdrant
 
 up-all:
 	docker compose --profile teradata up -d --build
