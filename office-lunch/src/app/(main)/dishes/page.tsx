@@ -10,11 +10,11 @@ import type { Cluster, Dish } from "@/lib/types";
 
 const TOTAL_ITEMS = 1559; // số mã món khác nhau trong food.txt
 
-type Draft = { itemId: string; name: string; clusterId: number; price: string; tags: string; image: string };
-const empty: Draft = { itemId: "", name: "", clusterId: 0, price: "", tags: "", image: "" };
+type Draft = { itemId: string; name: string; categoryId: number; price: string; tags: string; image: string };
+const empty: Draft = { itemId: "", name: "", categoryId: 0, price: "", tags: "", image: "" };
 
 export default function DishesPage() {
-  const { data, reload } = useFetch<{ clusters: Cluster[]; dishes: Dish[] }>("/api/clusters");
+  const { data, reload } = useFetch<{ categories: Cluster[]; dishes: Dish[] }>("/api/clusters");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<number | "all">("all");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -22,15 +22,15 @@ export default function DishesPage() {
   const [error, setError] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
-  const clusters = data?.clusters ?? [];
+  const clusters = data?.categories ?? [];
   const rows = (data?.dishes ?? [])
-    .filter((d) => filter === "all" || d.clusterId === filter)
+    .filter((d) => filter === "all" || d.categoryId === filter)
     .filter((d) => `${d.name} ${d.itemId}`.toLowerCase().includes(q.toLowerCase()))
-    .sort((a, b) => a.clusterId - b.clusterId || a.name.localeCompare(b.name, "vi"));
+    .sort((a, b) => (a.categoryId ?? 99) - (b.categoryId ?? 99) || a.name.localeCompare(b.name, "vi"));
 
   function edit(d: Dish) {
     setEditingId(d.itemId);
-    setDraft({ itemId: String(d.itemId), name: d.name, clusterId: d.clusterId, price: String(d.price), tags: d.tags.join(", "), image: d.image });
+    setDraft({ itemId: String(d.itemId), name: d.name, categoryId: d.categoryId ?? 0, price: String(d.price), tags: d.tags.join(", "), image: d.image });
   }
 
   async function save() {
@@ -38,7 +38,7 @@ export default function DishesPage() {
     const body = {
       itemId: Number(draft.itemId),
       name: draft.name.trim(),
-      clusterId: draft.clusterId,
+      categoryId: draft.categoryId,
       price: Number(draft.price),
       tags: draft.tags.split(",").map((t) => t.trim()).filter(Boolean),
       image: draft.image.trim().split("?")[0],
@@ -46,7 +46,7 @@ export default function DishesPage() {
     if (!body.itemId || !body.name || !body.price) return setError("Cần nhập mã món, tên món và giá.");
     try {
       if (editingId) await api.put(`/api/dishes/${editingId}`, body);
-      else await api.post("/api/dishes", { ...body, x: 50, y: 50 }); // toạ độ thật do backend tính lại
+      else await api.post("/api/dishes", body); // toạ độ thật do backend tính lại
       setDraft(null);
       setEditingId(null);
       setError(null);
@@ -79,11 +79,9 @@ export default function DishesPage() {
     <>
       <PageHead
         title="Quản lý món"
-        sub="Gán tên món cho từng mã trong food.txt. Bộ dữ liệu gốc chỉ có mã số, tên món ở đây do bạn đặt theo cụm."
+        sub="Bộ dữ liệu gốc chỉ có mã số. Tên, giá và nhóm món là metadata demo; cụm học máy được tính riêng."
       >
         <div className="flex flex-wrap gap-2">
-          <Button disabled title="Làm ở giai đoạn backend">Nhập food.txt</Button>
-          <Button disabled title="Làm ở giai đoạn backend">Chạy lại embedding</Button>
           <Button variant="primary" onClick={() => { setEditingId(null); setDraft(empty); }}>Thêm món</Button>
         </div>
       </PageHead>
@@ -111,8 +109,8 @@ export default function DishesPage() {
               <select
                 id="dish-cluster"
                 className={input}
-                value={draft.clusterId}
-                onChange={(e) => setDraft({ ...draft, clusterId: Number(e.target.value) })}
+                value={draft.categoryId}
+                onChange={(e) => setDraft({ ...draft, categoryId: Number(e.target.value) })}
               >
                 {clusters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -167,12 +165,13 @@ export default function DishesPage() {
                   <span className="flex items-center gap-3">
                     <DishImage src={d.image} alt="" sizes="36px" className="size-9 shrink-0 rounded-lg" />
                     {d.name}
+                    {d.vectorStatus === "pending" && <span className="ml-2 text-xs text-muted">Chờ vector</span>}
                   </span>
                 </td>
                 <td className="px-4 py-2.5">
-                  {clusters[d.clusterId] && <ClusterPill name={clusters[d.clusterId].name} color={clusters[d.clusterId].color} />}
+                  {clusters[d.categoryId ?? -1] && <ClusterPill name={clusters[d.categoryId ?? -1].name} color={clusters[d.categoryId ?? -1].color} />}
                 </td>
-                <td className="px-4 py-2.5 text-right tabular-nums">{formatPrice(d.price)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{d.categoryId === null ? "Chưa gán giá" : formatPrice(d.price)}</td>
                 <td className="px-4 py-2.5 text-muted">{d.tags.join(", ")}</td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-right">
                   {confirmId === d.itemId ? (

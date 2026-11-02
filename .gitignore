@@ -12,3 +12,7 @@ teradata/*.qcow2
 
 node_modules/
 .next/
+backend/.venv/
+backend/artifacts/*
+!backend/artifacts/.gitkeep
+.pytest_cache/

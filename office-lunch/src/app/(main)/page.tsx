@@ -17,6 +17,7 @@ export default function HomePage() {
   const [ctx, setCtx] = useState<LunchContext>({ weather: "nang-nong", budget: user.budget, breakTime: 30, mood: "gi-cung-duoc", groupSize: 1 });
   const [city, setCity] = useState<City>("hcm");
   const [weather, setWeather] = useState<WeatherNow | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [recs, setRecs] = useState<Recommendation[] | null>(null);
   const [exclude, setExclude] = useState<number[]>([]);
   const [picked, setPicked] = useState<number | null>(null);
@@ -32,7 +33,7 @@ export default function HomePage() {
   }, [city]);
 
   useEffect(() => {
-    api.post<Recommendation[]>("/api/recommend", { context: ctx, exclude, limit: 4 }).then(setRecs);
+    api.post<Recommendation[]>("/api/recommend", { context: ctx, exclude, limit: 4 }).then((r) => { setRecs(r); setError(null); }, (e: Error) => setError(e.message));
   }, [ctx, exclude]);
 
   useEffect(() => {
@@ -48,9 +49,14 @@ export default function HomePage() {
     setToast(`Đã lưu "${rec.dish.name}" vào lịch sử hôm nay`);
   }
 
-  function skip(rec: Recommendation, disliked = false) {
+  async function skip(rec: Recommendation, disliked = false) {
+    if (disliked) {
+      try {
+        await api.post("/api/meals", { date: new Date().toISOString().slice(0, 10), itemIds: [rec.dish.itemId], label: "no", context: ctx });
+      } catch (e) { setError((e as Error).message); return; }
+    }
     setExclude((e) => [...e, rec.dish.itemId]);
-    if (disliked) setToast(`Sẽ ít gợi ý "${rec.dish.name}" hơn`);
+    if (disliked) setToast(`Đã lưu phản hồi không thích "${rec.dish.name}"`);
   }
 
   const featured = recs?.[0] ?? null;
@@ -86,7 +92,8 @@ export default function HomePage() {
       </header>
 
       <div className={`${card} p-5`}>
-        <ContextPicker value={ctx} onChange={(v) => { setCtx(v); setPicked(null); }} autoWeather={weather?.source === "open-meteo" ? weather.weather : undefined} />
+        {error && <p role="alert" className="text-sm text-muted">{error}</p>}
+      <ContextPicker value={ctx} onChange={(v) => { setCtx(v); setPicked(null); }} autoWeather={weather?.source === "open-meteo" ? weather.weather : undefined} />
       </div>
 
       {recs && recs.length === 0 && (

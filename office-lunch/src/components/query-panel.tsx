@@ -51,7 +51,7 @@ export function QueryPanel() {
               <div>
                 <h2 className="font-semibold">Truy vấn của trang này</h2>
                 <p className="mt-1 text-xs text-muted">
-                  {counts.teradata} Teradata · {counts.qdrant} Qdrant. Đang là câu truy vấn mẫu, số dòng lấy từ dữ liệu giả.
+                  {counts.teradata} Teradata · {counts.qdrant} Qdrant. Truy vấn đã thực thi; tham số nhạy cảm được ẩn. Header giới hạn 6 KB.
                 </p>
               </div>
               <Button variant="quiet" onClick={() => setOpen(false)}>Đóng</Button>
@@ -63,6 +63,7 @@ export function QueryPanel() {
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <span className={`rounded px-1.5 py-0.5 font-medium ${engineStyle[q.engine].className}`}>{engineStyle[q.engine].label}</span>
                     <span className="font-medium">{q.title}</span>
+                    {q.durationMs !== undefined && <span>{q.durationMs.toFixed(2)} ms</span>}
                     {q.rows !== undefined && <span className="text-muted">· {q.rows} dòng</span>}
                   </div>
                   <pre className="overflow-x-auto rounded-xl bg-surface-2 p-3 font-mono text-xs leading-relaxed">{q.text}</pre>

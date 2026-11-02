@@ -13,7 +13,7 @@ export default function ClustersPage() {
   const [hover, setHover] = useState<Dish | null>(null);
 
   const clusters = data?.clusters ?? [];
-  const dishes = data?.dishes ?? [];
+  const dishes = (data?.dishes ?? []).filter(d => d.clusterId >= 0 && d.vectorStatus === "synced");
   const eaten = new Set((meals.data ?? []).flatMap((m) => m.itemIds));
   const shown = active === null ? dishes : dishes.filter((d) => d.clusterId === active);
 
@@ -21,7 +21,7 @@ export default function ClustersPage() {
     <>
       <PageHead
         title="Khám phá cụm món"
-        sub="Mỗi chấm là một món, đặt theo vector đã giảm xuống 2 chiều. Món hay được ăn cùng nhau sẽ nằm gần nhau."
+        sub="Mỗi chấm là một món, đặt theo vector đã giảm xuống 2 chiều. PCA có thể làm biến dạng khoảng cách gốc."
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
@@ -71,7 +71,7 @@ export default function ClustersPage() {
               </div>
             )}
           </div>
-          <p className="mt-2 text-xs text-muted">Vòng tròn đen: món bạn đã ăn. Toạ độ hiện là dữ liệu giả.</p>
+          <p className="mt-2 text-xs text-muted">Vòng tròn đen: món bạn đã ăn. Toạ độ PCA và cụm KMeans được tính từ model đã huấn luyện.</p>
         </div>
 
         <aside className="flex flex-col gap-4">

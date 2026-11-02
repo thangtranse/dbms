@@ -7,14 +7,14 @@ Payload cho phép kết hợp tìm kiếm tương tự với lọc thuộc tính
 
 ## Trong OfficeLunch
 
-Định hướng: pipeline Trans2Vec sinh vector món/giao dịch; ứng dụng đưa vector vào
+Pipeline Trans2Vec sinh vector món/giao dịch; ứng dụng đưa vector vào
 Qdrant và truy vấn láng giềng gần để gợi ý. Teradata giữ dữ liệu quan hệ gốc,
 Qdrant giữ vector và metadata phục vụ tìm kiếm. Hai bên dùng ID nghiệp vụ thống
 nhất; backend cần xử lý retry, cập nhật và xóa để tránh dữ liệu không đồng bộ.
 
 Qdrant không tự chạy Trans2Vec, phân cụm hay sinh kết quả đánh giá mô hình.
-Các màn hình cụm và đánh giá hiện hiển thị dữ liệu giả; cần pipeline thực nghiệm
-riêng trước khi coi chúng là kết quả thật.
+Các màn hình cụm và đánh giá đọc kết quả pipeline thực nghiệm. Chưa chạy
+pipeline thì hiển thị trạng thái chưa có kết quả, không dùng số giả.
 
 ## Kết nối
 

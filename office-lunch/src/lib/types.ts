@@ -1,5 +1,5 @@
 // Kiểu dữ liệu dùng chung giữa UI và API.
-// Khi làm backend: Dish/Meal/UserProfile nằm ở Teradata,
+// Dish/Meal/UserProfile nằm ở Teradata,
 // vector + cluster_id của Dish/Meal nằm ở Qdrant (payload).
 
 export type Label = "yes" | "no";
@@ -14,11 +14,14 @@ export interface Cluster {
 export interface Dish {
   itemId: number; // mã món gốc trong food.txt (Trans2Vec)
   name: string;
-  clusterId: number;
+  categoryId: number | null; // metadata demo
+  clusterId: number; // cụm học máy, -1 khi chưa có vector
+  vectorStatus?: "pending" | "synced";
+  modelVersion?: string | null;
   price: number; // VND
   tags: string[];
   image: string; // URL ảnh (Unsplash), không kèm query string
-  // Toạ độ 2D sau khi giảm chiều vector (UMAP/t-SNE) — backend tính từ Qdrant
+  // Toạ độ 2D sau khi giảm chiều vector (PCA) — pipeline tính từ vector
   x: number;
   y: number;
 }
@@ -39,6 +42,8 @@ export interface LunchContext {
 // Một bữa ăn = một giao dịch (transaction) giống một dòng trong food.txt:
 // "<label>\t<itemId> <itemId> ..."
 export interface Meal {
+  vectorStatus?: "pending" | "synced";
+  source?: string;
   id: string;
   userId: string;
   date: string; // ISO yyyy-mm-dd
@@ -49,10 +54,10 @@ export interface Meal {
 
 export interface Recommendation {
   dish: Dish;
-  score: number; // 0..1, độ tương đồng (cosine) từ Qdrant
+  score: number | null; // cosine -1..1; null khi cold start
   reason: string;
   predictedLabel: Label; // kết quả phân loại kNN yes/no
-  // Luật kết hợp món → đồ uống (từ tập phổ biến food_items_fis_*.txt)
+  // Đồng xuất hiện trên food, kết hợp category đồ uống do demo gán
   drink?: { dish: Dish; confidence: number };
 }
 

@@ -10,14 +10,15 @@ interface Actions {
   picked?: boolean;
 }
 
-function Score({ score, predicted }: { score: number; predicted: Recommendation["predictedLabel"] }) {
+function Score({ score, predicted }: { score: number | null; predicted: Recommendation["predictedLabel"] }) {
+  if (score === null) return <span className="text-xs text-muted">Phổ biến · cold start</span>;
   return (
     <div className="flex items-center gap-2 text-xs text-muted">
       <div className="h-1 w-16 overflow-hidden rounded-full bg-surface-2">
-        <div className="h-full rounded-full bg-accent" style={{ width: `${score * 100}%` }} />
+        <div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(0, score) * 100}%` }} />
       </div>
       <span className="tabular-nums">
-        Hợp {Math.round(score * 100)}% ·{" "}
+        Cosine {score.toFixed(3)} ·{" "}
         <span className={predicted === "yes" ? "text-good" : "text-muted"}>{predicted === "yes" ? "dự đoán thích" : "chưa chắc"}</span>
       </span>
     </div>

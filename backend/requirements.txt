@@ -1,0 +1,13 @@
+fastapi==0.121.1
+uvicorn==0.38.0
+teradatasql==20.0.0.72
+qdrant-client==1.19.1
+numpy==1.26.4
+scipy==1.13.1
+scikit-learn==1.7.2
+gensim==4.3.3
+mlxtend==0.23.4
+httpx==0.28.1
+pytest==8.4.2
+
+pandas==2.2.3

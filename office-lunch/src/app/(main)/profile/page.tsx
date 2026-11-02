@@ -29,10 +29,10 @@ export default function ProfilePage() {
   const set = <K extends keyof UserProfile>(k: K, v: UserProfile[K]) => { setP({ ...p, [k]: v }); setSaved(false); };
   const toggleLike = (id: number) =>
     set("likedItemIds", p.likedItemIds.includes(id) ? p.likedItemIds.filter((x) => x !== id) : [...p.likedItemIds, id]);
-  const mains = (meta.data?.dishes ?? []).filter((d) => d.clusterId !== 6);
+  const mains = (meta.data?.dishes ?? []).filter((d) => d.categoryId !== null && d.categoryId !== 6);
 
   async function save() {
-    await api.put("/api/profile", p);
+    await api.put("/api/profile", { name: p!.name, team: p!.team, diet: p!.diet, avoid: p!.avoid, spicy: p!.spicy, budget: p!.budget, likedItemIds: p!.likedItemIds });
     setSaved(true);
   }
 
@@ -93,7 +93,7 @@ export default function ProfilePage() {
           <h2 className="text-lg font-semibold">Bạn hợp nhóm món nào</h2>
           <p className="mb-4 text-sm text-muted">Tính từ lịch sử: mỗi bữa yes cộng điểm, mỗi bữa no trừ điểm cho cụm của món đó.</p>
           <ul className="flex flex-col gap-3">
-            {(meta.data?.clusters ?? []).filter((c) => c.id !== 6).map((c) => {
+            {(meta.data?.clusters ?? []).map((c) => {
               const v = affinity[c.id] ?? 0;
               return (
                 <li key={c.id} className="grid grid-cols-[9rem_1fr_2.5rem] items-center gap-3 text-sm">

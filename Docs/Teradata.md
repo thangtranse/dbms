@@ -12,7 +12,8 @@ phân phối dữ liệu, khác với ràng buộc Primary Key của mô hình q
 
 Dự kiến lưu dữ liệu có cấu trúc: người dùng, món ăn, bữa ăn và chi tiết bữa ăn.
 SQL phù hợp cho CRUD, join và thống kê chi phí/lịch sử theo thời gian.
-Hiện các API OfficeLunch vẫn thao tác kho dữ liệu giả trong bộ nhớ.
+Các API nghiệp vụ OfficeLunch sử dụng schema riêng `officelunch`, có transaction
+cho CRUD và outbox. SQL thực hiện join và tổng hợp; xem [API](API.md).
 
 ## Sandbox hiện có
 

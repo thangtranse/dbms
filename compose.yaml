@@ -12,6 +12,10 @@ services:
       HOSTNAME: "0.0.0.0"
       PORT: "3000"
       NEXT_TELEMETRY_DISABLED: "1"
+      BACKEND_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -21,7 +25,37 @@ services:
     networks:
       - databases
 
+  api: &backend
+    build: ./backend
+    image: dbms/office-lunch-api:local
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      QDRANT_URL: "${QDRANT_URL:-http://100.65.210.21:6333}"
+      TERADATA_DATABASE: "${TERADATA_DATABASE:-officelunch}"
+      ARTIFACT_DIR: /app/artifacts
+      FOOD_PATH: /data/food.txt
+    volumes:
+      - ./backend/artifacts:/app/artifacts
+      - ./office-lunch/pipeline/data/food.txt:/data/food.txt:ro
+    ports:
+      - "127.0.0.1:${OFFICE_LUNCH_API_PORT:-8001}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/live')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [databases]
+
+  vector-worker:
+    <<: *backend
+    ports: []
+    command: ["python", "-m", "ol.cli", "sync", "--loop"]
+    healthcheck:
+      disable: true
+
   qdrant:
+    profiles: ["local-qdrant"]
     image: qdrant/qdrant:v1.19.2
     container_name: dbms-qdrant
     restart: unless-stopped
