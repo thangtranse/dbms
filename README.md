@@ -1,5 +1,8 @@
 # OfficeLunch — Teradata + Qdrant
 
+Đọc trước: [Kiến trúc và chi tiết chức năng](Docs/Architecture.md) — tổng quan
+dự án, các màn hình, thuật toán gợi ý, mô hình dữ liệu và luồng đồng bộ.
+
 Đã có [hướng dẫn deploy native trên AI Dubbing sandbox](deploy/sandbox/README.md)
 và [biên bản kiểm chứng ngày 06-11](Docs/Deployment-2026-11-06.md).
 FE sandbox dùng cổng **18300**; Cloudflare connector chạy cùng máy trỏ

@@ -14,6 +14,9 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("migrate")
     sub.add_parser("import-food")
+    catalog = sub.add_parser("enrich-catalog")
+    catalog.add_argument("--apply", action="store_true")
+    catalog.add_argument("--backup")
     w = sub.add_parser("sync")
     mode = w.add_mutually_exclusive_group()
     mode.add_argument("--loop", action="store_true")
@@ -45,6 +48,12 @@ def main():
         from .ingest import import_food
 
         import_food()
+    elif args.cmd == "enrich-catalog":
+        from .catalog import enrich
+        from .db import session
+
+        with session() as db:
+            print(enrich(db, apply=args.apply, backup=args.backup))
     elif args.cmd == "train":
         if (
             args.seeds < 1

@@ -8,7 +8,6 @@ import { useFetch } from "@/lib/hooks";
 import { formatPrice } from "@/lib/labels";
 import type { Cluster, Dish } from "@/lib/types";
 
-const TOTAL_ITEMS = 1559; // số mã món khác nhau trong food.txt
 
 type Draft = { itemId: string; name: string; categoryId: number; price: string; tags: string; image: string };
 const empty: Draft = { itemId: "", name: "", categoryId: 0, price: "", tags: "", image: "" };
@@ -23,6 +22,8 @@ export default function DishesPage() {
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const clusters = data?.categories ?? [];
+  const total = data?.dishes.length ?? 0;
+  const complete = (data?.dishes ?? []).filter(d => d.source !== "unmapped" && !d.name.startsWith("Item #") && d.image && d.tags.length > 0).length;
   const rows = (data?.dishes ?? [])
     .filter((d) => filter === "all" || d.categoryId === filter)
     .filter((d) => `${d.name} ${d.itemId}`.toLowerCase().includes(q.toLowerCase()))
@@ -79,7 +80,7 @@ export default function DishesPage() {
     <>
       <PageHead
         title="Quản lý món"
-        sub="Bộ dữ liệu gốc chỉ có mã số. Tên, giá và nhóm món là metadata demo; cụm học máy được tính riêng."
+        sub="Tên và ảnh công thức có dẫn nguồn; ánh xạ sang mã nghiên cứu là demo. Giá chưa xác minh để trống; cụm học máy được tính riêng."
       >
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={() => { setEditingId(null); setDraft(empty); }}>Thêm món</Button>
@@ -88,13 +89,13 @@ export default function DishesPage() {
 
       <div className={`${card} mb-6 flex flex-col gap-2 p-4`}>
         <div className="flex items-baseline justify-between text-sm">
-          <span>Đã gán tên</span>
+          <span>Có tên, ảnh và tag</span>
           <span className="tabular-nums text-muted">
-            <b className="text-ink">{data?.dishes.length ?? 0}</b> / {TOTAL_ITEMS} mã món
+            <b className="text-ink">{complete}</b> / {total} mã món
           </span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-surface-2">
-          <div className="h-full bg-accent" style={{ width: `${((data?.dishes.length ?? 0) / TOTAL_ITEMS) * 100}%` }} />
+          <div className="h-full bg-accent" style={{ width: `${(total ? complete / total : 0) * 100}%` }} />
         </div>
       </div>
 
@@ -164,14 +165,17 @@ export default function DishesPage() {
                 <td className="px-4 py-2.5 font-medium">
                   <span className="flex items-center gap-3">
                     <DishImage src={d.image} alt="" sizes="36px" className="size-9 shrink-0 rounded-lg" />
-                    {d.name}
+                    <span>
+                      {d.name}
+                      {d.sourceUrl && <a href={d.sourceUrl} target="_blank" rel="noreferrer" className="block text-xs text-muted underline">Nguồn: {d.sourceProvider} · ánh xạ demo</a>}
+                    </span>
                     {d.vectorStatus === "pending" && <span className="ml-2 text-xs text-muted">Chờ vector</span>}
                   </span>
                 </td>
                 <td className="px-4 py-2.5">
                   {clusters[d.categoryId ?? -1] && <ClusterPill name={clusters[d.categoryId ?? -1].name} color={clusters[d.categoryId ?? -1].color} />}
                 </td>
-                <td className="px-4 py-2.5 text-right tabular-nums">{d.categoryId === null ? "Chưa gán giá" : formatPrice(d.price)}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{d.price <= 0 ? "Chưa có giá" : formatPrice(d.price)}</td>
                 <td className="px-4 py-2.5 text-muted">{d.tags.join(", ")}</td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-right">
                   {confirmId === d.itemId ? (

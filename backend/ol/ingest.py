@@ -4,6 +4,7 @@ from collections import Counter
 from pathlib import Path
 from .db import session, dumps
 from .config import FOOD
+from .catalog import metadata
 
 
 def load_food(path):
@@ -97,18 +98,7 @@ def import_food():
         for i in sorted({i for r in records for i in r["itemIds"]}):
             d = seeds.get(
                 i,
-                dict(
-                    itemId=i,
-                    name=f"Item #{i}",
-                    categoryId=None,
-                    clusterId=-1,
-                    price=0,
-                    tags=[],
-                    image="",
-                    x=0,
-                    y=0,
-                    source="unmapped",
-                ),
+                dict(itemId=i, clusterId=-1, x=0, y=0, **metadata(i)),
             )
             d.update(vectorStatus="pending", modelVersion=None)
             dish_rows.append([i, d["price"], d["categoryId"], -1, dumps(d)])

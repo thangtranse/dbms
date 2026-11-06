@@ -253,6 +253,7 @@ def _recommendations(db, uid, body, q):
         qm.FieldCondition(key="modelVersion", match=qm.MatchValue(value=model.version)),
     ]
     must.append(qm.FieldCondition(key="mapped", match=qm.MatchValue(value=True)))
+    must.append(qm.FieldCondition(key="price", range=qm.Range(gt=0)))
     must_not = [qm.FieldCondition(key="categoryId", match=qm.MatchValue(value=6))]
     if body.exclude:
         must_not.append(qm.HasIdCondition(has_id=body.exclude))
@@ -331,7 +332,8 @@ def _recommendations(db, uid, body, q):
             continue
         # Revalidate against authoritative SQL metadata while outbox may be pending.
         if (
-            (budget is not None and dish["price"] > budget)
+            dish["price"] <= 0
+            or (budget is not None and dish["price"] > budget)
             or set(dish["tags"]) & set(avoid)
             or not set(tags) <= set(dish["tags"])
             or dish["categoryId"] == 6

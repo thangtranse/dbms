@@ -1,5 +1,9 @@
 # Tài liệu OfficeLunch
 
+Nên bắt đầu với [Kiến trúc và chi tiết chức năng](Architecture.md): tài liệu
+tổng quan từ góc nhìn người dùng đến cách xử lý trong backend, dữ liệu,
+thuật toán và triển khai. Sau đó tra cứu các tài liệu chuyên sâu bên dưới.
+
 - [Version theo commit](Versioning.md): mã bản build trên FE/API và quy trình build/deploy.
 
 - [Teradata](Teradata.md): SQL, kiến trúc và sandbox.
@@ -18,10 +22,10 @@
 
 ```mermaid
 flowchart LR
-  FE[Next.js local] --> API[FastAPI local]
+  FE[Next.js local hoặc sandbox] --> API[FastAPI]
   API --> TD[Teradata sandbox VM]
   API --> Q[Qdrant sandbox container]
-  TD --> W[Outbox worker local]
+  TD --> W[Outbox worker duy nhất trên sandbox]
   W --> Q
   CLI[Training / benchmark CLI sandbox] --> TD
   CLI --> Q

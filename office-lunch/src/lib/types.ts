@@ -14,6 +14,12 @@ export interface Cluster {
 export interface Dish {
   itemId: number; // mã món gốc trong food.txt (Trans2Vec)
   name: string;
+  source?: string;
+  metadataVersion?: string;
+  sourceUrl?: string;
+  sourceProvider?: string;
+  mappingBasis?: string;
+  priceStatus?: "unknown";
   categoryId: number | null; // metadata demo
   clusterId: number; // cụm học máy, -1 khi chưa có vector
   vectorStatus?: "pending" | "synced";

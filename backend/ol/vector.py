@@ -279,7 +279,7 @@ def sync_once():
                             tags=doc["tags"],
                             categoryId=doc["categoryId"],
                             active=True,
-                            mapped=doc["categoryId"] is not None,
+                            mapped=doc["categoryId"] is not None and doc["price"] > 0,
                         )
                     else:
                         payload.update(label=doc["label"], userId=doc["userId"])
