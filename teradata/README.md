@@ -7,6 +7,13 @@ VMDKs under `teradata/runtime/vantage-express`.
 The source VMDKs remain read-only in practice: QEMU writes to QCOW2 overlays in
 `teradata/runtime/vantage-express/overlays`.
 
+Disk cache uses `writethrough`: QEMU flushes each write before acknowledging it
+to the guest. This prioritizes durability and can reduce write throughput; it
+does not repair an already damaged WAL or establish the cause of an earlier
+failure. See [QEMU disk cache documentation](https://www.qemu.org/docs/master/system/qemu-manpage.html).
+Always shut down the guest cleanly before host maintenance; do not kill QEMU
+or copy live writable overlays as if they were consistent backups.
+
 ```bash
 ./teradata/bin/start-vantage.sh
 ./teradata/bin/status-vantage.sh

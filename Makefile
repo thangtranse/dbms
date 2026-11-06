@@ -7,19 +7,19 @@ build:
 	docker compose --profile teradata build
 
 up:
-	docker compose up -d --build office-lunch api vector-worker
+	docker compose up -d --build office-lunch api
 
 up-all:
-	docker compose --profile teradata up -d --build office-lunch api vector-worker teradata-client
+	docker compose --profile teradata up -d --build office-lunch api teradata-client
 
 down:
-	docker compose --profile teradata down
+	docker compose --profile teradata --profile local-worker down
 
 logs:
-	docker compose --profile teradata logs -f
+	docker compose --profile teradata --profile local-worker logs -f
 
 status:
-	docker compose --profile teradata ps
+	docker compose --profile teradata --profile local-worker ps
 
 test-qdrant:
 	docker compose run --rm --no-deps api python -c 'from ol.config import qclient; c=qclient(); c.get_collections(); print("Qdrant authenticated connection is healthy"); c.close()'

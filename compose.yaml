@@ -49,6 +49,7 @@ services:
 
   vector-worker:
     <<: *backend
+    profiles: ["local-worker"]
     ports: []
     command: ["python", "-m", "ol.cli", "sync", "--loop"]
     healthcheck:

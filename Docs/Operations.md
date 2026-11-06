@@ -50,13 +50,18 @@ readiness còn kiểm tra model/Qdrant sau SQL, nên có thể mất lâu hơn 1
 
 ## Đổi active model
 
-Dừng `api` và `vector-worker` local trước khi activate trên sandbox. Không nhận
-ghi ứng dụng trong khoảng đổi model, và không chạy worker ở hai máy cùng lúc.
+Dừng API và worker ở cả nơi đang phục vụ local/sandbox trước khi activate.
+Không nhận ghi ứng dụng trong khoảng đổi model, và không chạy worker ở hai máy
+cùng lúc. Worker chính hiện chạy native trên sandbox.
 
 ```bash
 # Local
 docker compose stop api vector-worker
+# Trên sandbox, dừng đúng process OfficeLunch:
+cd /Users/gper/Workplace/dubbing
+./control.sh stop office-lunch:office-lunch-api office-lunch:office-lunch-worker
 # Sandbox, trong thư mục lab
+cd /Users/gper/Workplace/dubbing/office-lunch-lab
 backend/run-sandbox.sh activate --run-id <completed-model-run> --seed 0
 backend/run-sandbox.sh sync --drain
 ```
@@ -69,8 +74,9 @@ Active pointer phải trỏ đến model đã có đầy đủ file local. Các 
 # Local, sau khi copy xong
 docker compose up -d api office-lunch
 curl --fail http://127.0.0.1:8001/api/health/ready
-# Kiểm tra CRUD/outbox trước khi bật worker thường trực
-docker compose up -d vector-worker
+# Trên sandbox, sau khi kiểm tra CRUD/outbox:
+cd /Users/gper/Workplace/dubbing
+./control.sh start office-lunch:office-lunch-api office-lunch:office-lunch-worker
 ```
 
 `sync --drain` dừng khi không còn event đồng bộ được trong lượt xử lý. Item mới

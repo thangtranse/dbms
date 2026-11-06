@@ -1,5 +1,10 @@
 # OfficeLunch — Teradata + Qdrant
 
+Đã có [hướng dẫn deploy native trên AI Dubbing sandbox](deploy/sandbox/README.md)
+và [biên bản kiểm chứng ngày 06-11](Docs/Deployment-2026-11-06.md).
+FE sandbox dùng cổng **18300**; Cloudflare connector chạy cùng máy trỏ
+`http://127.0.0.1:18300` (API đi qua proxy của FE).
+
 Ứng dụng gợi ý bữa trưa, CRUD và thống kê dùng **Teradata thật**, tìm kiếm vector
 bằng **Qdrant thật**. FE Next.js → `/api/*` proxy → FastAPI Python. Không còn API
 mock trong FE. Database dùng sandbox `100.65.210.21`, không tạo VM Teradata local.
@@ -14,7 +19,7 @@ cp .env.example .env # chỉ khi chưa có .env
 docker compose build api office-lunch
 docker compose run --rm api python -m ol.cli migrate
 docker compose run --rm api python -m ol.cli import-food
-docker compose up -d api office-lunch vector-worker
+docker compose up -d api office-lunch
 ```
 
 - [Ứng dụng](http://localhost:3000), cổng tùy chỉnh `OFFICE_LUNCH_PORT`.
@@ -23,6 +28,11 @@ docker compose up -d api office-lunch vector-worker
 - Readiness SQL/Qdrant/model: `curl --fail http://127.0.0.1:8001/api/health/ready`.
 - Log: `docker compose logs -f api vector-worker`.
 - Dừng riêng app: `docker compose stop office-lunch api vector-worker`.
+
+Worker hiện chạy native trên sandbox. Compose local mặc định chỉ chạy FE/API;
+`vector-worker` thuộc profile `local-worker` để tránh hai worker trên cùng
+namespace. Nếu chuyển worker về local, dừng worker sandbox trước rồi chạy
+`docker compose --profile local-worker up -d vector-worker`.
 
 Import là idempotent theo checksum food. Migration chỉ tạo schema `officelunch`
 và các bảng của ứng dụng; cần tài khoản sandbox có quyền tạo database hoặc DBA

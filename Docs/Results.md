@@ -1,6 +1,22 @@
-# Kết quả kiểm chứng OfficeLunch — cập nhật 2026-11-02
+# Kết quả kiểm chứng OfficeLunch — cập nhật 2026-11-06
 
-## Model mới đã hoàn tất, chưa activate
+## Trạng thái hiện tại sau dựng lại Teradata
+
+Theo ủy quyền bỏ dữ liệu cũ, Teradata đã được dựng lại trên sandbox từ VMDK gốc.
+Model `food-trans2vec-v4-s0` đã activate; vector đã đồng bộ, benchmark artifact
+đã publish lại kèm cảnh báo legacy. Readiness local và sandbox đều HTTP 200 với
+SQL/model/Qdrant true. API/FE/worker native đều RUNNING; outbox không còn pending.
+
+16 tests có SQL thật qua; CRUD/ownership/conflict/partial update qua; ca Qdrant
+lỗi/retry revision mới và worker thường trực upsert/delete tự động đều qua.
+Bộ lọc qua FE: 18 context, 40 gợi ý. Màn hình evaluation hiển thị đúng model v4,
+30 dòng benchmark lịch sử và cảnh báo về vector v2.
+
+Sau tắt/mở VM sạch, fingerprint nội dung cả 12 bảng khớp hoàn toàn. Có snapshot
+khỏe offline đã kiểm checksum. Xem [biên bản dựng lại](Teradata-Rebuild-2026-11-06.md)
+cho đường dẫn backup, số lượng và giới hạn phục hồi dữ liệu cũ.
+
+## Model v4 đã hoàn tất và activate
 
 Run `food-trans2vec-v4`: 10 seed 0–9, 128 chiều, 50 epoch, minsup 0.006,
 Gensim 4.3.3 / NumPy 1.26.4. Chạy native trên sandbox trong 678,69 giây.
@@ -24,8 +40,8 @@ tăng chất lượng dự đoán trên food. Việc khắc phục numerical reg
 hóa riêng nếu muốn cải thiện; không dùng test để chọn tham số của run đã báo cáo.
 
 Run v3 bị ngắt ở seed 9 sau reboot, không có manifest complete nên không dùng.
-V4 chưa được activate/publish vì Teradata DBS đang lỗi; active pointer cũ giữ
-nguyên để không trộn metadata SQL và collection của hai model.
+V4 được activate/publish ngày 06-11 sau khi dựng lại SQL; active pointer local
+và sandbox cùng trỏ đến model này. Đánh giá mô hình không được tính lại khi publish.
 
 ## Benchmark database đã hoàn tất
 
@@ -59,7 +75,7 @@ Kết quả API: `/api/benchmarks/food-bench-v4`.
 
 Xem [phương pháp và giới hạn](Benchmark.md) và [vận hành](../backend/README.md).
 
-## Trạng thái nghiệm thu ngày 2026-11-02
+## Trạng thái lịch sử ngày 2026-11-02 (đã được thay thế bởi cập nhật 06-11)
 
 - Build FE, Compose validation và kiểm tra source đã qua.
 - Bộ dependency thay thế đã qua 16 tests cả trên sandbox và Docker local ở

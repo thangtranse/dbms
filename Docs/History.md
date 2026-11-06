@@ -79,6 +79,71 @@ không thay thế manifest hoặc số đo thô.
 
 Trạng thái kiểm thử và vận hành cuối cùng được ghi tại [Results](Results.md).
 
+## 2026-11-05 — Yêu cầu triển khai ứng dụng lên sandbox
+
+- Người dùng yêu cầu deploy OfficeLunch theo skill `deploy-ai-dubbing-sandbox`:
+  FE/API chạy native dưới Supervisor, dùng lại database hiện có.
+- Preflight local: checkout sạch trên `main`, origin
+  `git@github.com:thangtranse/dbms.git`, commit `5e5c85d7c654cda9386b692a28da8f6da23e056e`.
+- Tailscale local ban đầu đang tắt; đã bật lại bằng `tailscale up` thành công.
+  Sau đó target `100.65.210.21` vẫn báo offline, last seen 2 ngày, SSH 22111
+  timeout khi thử lại. Chưa xác minh được checkout/Supervisor/database hiện tại.
+- Chưa pull, build, cài đặt, ghi cấu hình Supervisor hoặc thay đổi process nào
+  trên sandbox. Giữ yêu cầu bảo toàn dữ liệu Teradata để chẩn đoán; không suy
+  diễn trạng thái lỗi ngày 02-11 là kết quả kiểm tra mới.
+- Cần sandbox/Tailscale phía remote online trước khi tiếp tục preflight và deploy.
+
+## 2026-11-06 — Deploy native FE/API thành công
+
+- Sandbox online; preflight xác minh checkout `dbms` sạch trên main, đúng origin.
+  Pull fast-forward từ `ce18dd7` lên `5e5c85d`.
+- Tạo virtualenv backend riêng, cài requirements, chạy 13 tests qua/3 live tests
+  skipped; npm ci và FE build/type/lint qua.
+- Thêm group Supervisor `office-lunch`, API 8002 loopback và FE 3002 Tailscale.
+  API/FE RUNNING, worker STOPPED. Dịch vụ khác giữ nguyên PID/trạng thái.
+- Giao diện, 3 asset và liveness qua proxy được xác minh HTTP 200 qua SSH tunnel.
+  Cổng frontend trực tiếp từ client timeout; hướng dẫn dùng tunnel 13002 đã thêm.
+- Readiness 503: SQL/model chưa sẵn sàng; VM Teradata đang tắt, giữ nguyên yêu
+  cầu bảo toàn để chẩn đoán. Chưa migrate/import/activate hoặc start worker.
+- Chi tiết source, lệnh, process và bằng chứng: [Deployment-2026-11-06](Deployment-2026-11-06.md).
+
+## 2026-11-06 — Kiểm tra/sửa Teradata theo yêu cầu tiếp theo
+
+- VM đang tắt; đã kiểm tra QCOW2 offline và sao lưu đủ ba overlay, xác minh
+  SHA-256. Bộ cài OVF/VMDK cũng khớp checksum gốc.
+- Thử boot bằng lớp ghi riêng trên bản copy, giữ nguyên đĩa gốc. Guest tiếp tục
+  lỗi WAL 5192 ở cả ba AMP và crash limit 13857; SQL chưa phục hồi.
+- Thu thập diagnostics, yêu cầu shutdown bình thường bản thử. Không clear WAL,
+  sysinit hoặc tái tạo dữ liệu; đang chờ lựa chọn bảo toàn dữ liệu/khôi phục demo.
+- Chi tiết: [Teradata-Recovery-2026-11-06](Teradata-Recovery-2026-11-06.md).
+- Người dùng chọn giữ dữ liệu cũ và chờ phương án DBA/Teradata Support.
+  Dừng thử sửa, không tái tạo bộ đĩa/schema hoặc import lại dữ liệu.
+
+## 2026-11-06 — Dựng lại theo ủy quyền bỏ dữ liệu hiện có
+
+- Người dùng đổi quyết định và cho phép bỏ dữ liệu cũ để khắc phục. Giữ backup
+  lỗi nhưng chuyển sang overlay mới từ nguồn đã kiểm SHA-256 trên sandbox.
+- Launcher dùng writethrough, dừng riêng API trong lúc migrate/import. SQL mới
+  lên RUN/STARTED, DBS 5; import 4.000 giao dịch, chạy lại không nhân đôi.
+- Activate v4 seed 0; readiness cả sandbox và local HTTP 200. Bộ lọc gợi ý qua
+  18 context/40 recommendation. Các kiểm chứng còn lại ghi tại
+  [Teradata-Rebuild-2026-11-06](Teradata-Rebuild-2026-11-06.md).
+- 16 tests gồm SQL thật qua; CRUD và outbox fault/retry qua. Snapshot khỏe tạo
+  lúc guest đã tắt sạch, hash khớp; fingerprint 12 bảng khớp sau VM restart.
+- API/FE/worker native RUNNING, worker tự upsert/delete qua black-box test;
+  pending = 0. Readiness local/sandbox HTTP 200, browser evaluation hiển thị v4
+  và benchmark lịch sử. Worker local chuyển sang profile tùy chọn để tránh trùng.
+
+## 2026-11-06 — Đổi cổng phục vụ Cloudflare
+
+- Theo yêu cầu tránh trùng cổng, chuyển riêng FE sandbox từ 3002 sang 18300
+  (đã kiểm tra trống), bind 0.0.0.0 để dùng được localhost/IP máy sandbox.
+- Chỉ restart `office-lunch:office-lunch-frontend`; API 8002 và worker giữ PID.
+  FE và proxy readiness HTTP 200, kể cả khi dùng Host header tùy chỉnh.
+- Cloudflare origin khi connector chạy native cùng máy:
+  `http://127.0.0.1:18300`; API vẫn đi qua `/api` của FE. Chưa tạo hoặc thay đổi
+  tunnel/domain Cloudflare. SSH tunnel local 13002 đã trỏ lại cổng mới.
+
 ## Vị trí và cách đối chiếu
 
 | Thành phần | Vị trí |

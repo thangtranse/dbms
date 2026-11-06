@@ -16,7 +16,7 @@ route đồng bộ. Kết nối Teradata được tái sử dụng trong pool t�
 docker compose build api
 docker compose run --rm api python -m ol.cli migrate
 docker compose run --rm api python -m ol.cli import-food
-docker compose up -d --build api office-lunch vector-worker
+docker compose up -d --build api office-lunch
 curl --fail http://127.0.0.1:8001/api/health/ready
 ```
 
@@ -65,10 +65,13 @@ Sau activate, đồng bộ về local khi worker local chưa chạy:
 rsync -az -e 'ssh -p 22111' \
   gper@100.65.210.21:/Users/gper/Workplace/dubbing/office-lunch-lab/backend/artifacts/ \
   backend/artifacts/
-docker compose up -d vector-worker
+docker compose up -d api office-lunch
 ```
 
 Chỉ sync các run cần dùng và `active.json`; không cần copy run thử chưa hoàn tất.
+Worker chính hiện chạy native trên sandbox; không bật thêm worker local cùng
+namespace. Profile `local-worker` chỉ dùng khi chuyển quyền chạy worker về local
+và đã dừng worker sandbox.
 Không activate model mới khi API đang nhận traffic: dừng riêng API/vector-worker,
 activate, copy artifact, rồi start lại hai service. Không dừng database.
 

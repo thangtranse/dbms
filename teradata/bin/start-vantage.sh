@@ -41,11 +41,11 @@ rm -f "$monitor_socket" "$pid_file"
   -smp 2 \
   -m 8192 \
   -boot order=c \
-  -drive "file=$overlay_dir/disk3.qcow2,if=none,id=disk0,format=qcow2,cache=writeback" \
+  -drive "file=$overlay_dir/disk3.qcow2,if=none,id=disk0,format=qcow2,cache=writethrough" \
   -device ide-hd,drive=disk0,bus=ide.0 \
-  -drive "file=$overlay_dir/disk1.qcow2,if=none,id=disk1,format=qcow2,cache=writeback" \
+  -drive "file=$overlay_dir/disk1.qcow2,if=none,id=disk1,format=qcow2,cache=writethrough" \
   -device ide-hd,drive=disk1,bus=ide.1 \
-  -drive "file=$overlay_dir/disk2.qcow2,if=none,id=disk2,format=qcow2,cache=writeback" \
+  -drive "file=$overlay_dir/disk2.qcow2,if=none,id=disk2,format=qcow2,cache=writethrough" \
   -device ide-hd,drive=disk2,bus=ide.2 \
   -netdev user,id=net0,hostfwd=tcp:0.0.0.0:1025-:1025,hostfwd=tcp:127.0.0.1:22022-:22 \
   -device vmxnet3,netdev=net0,mac=52:54:00:20:00:81 \
