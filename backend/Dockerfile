@@ -4,6 +4,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
+ARG BUILD_COMMIT=unknown
+ARG BUILD_DIRTY=false
+RUN python -m ol.build
 RUN useradd -m -u 10001 appuser && chown -R appuser /app
 USER appuser
 CMD ["uvicorn", "ol.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

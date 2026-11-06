@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/build-info.mjs",
     "dev": "next dev --turbopack",
+    "prebuild": "node scripts/build-info.mjs",
+    "test:build-info": "node --test scripts/build-info.test.mjs",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint"

@@ -1,5 +1,8 @@
 .PHONY: config build up up-all down logs status test-qdrant test-teradata
 
+export BUILD_COMMIT := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
+export BUILD_DIRTY := $(shell test -z "$$(git status --porcelain 2>/dev/null)" && echo false || echo true)
+
 config:
 	docker compose config --quiet
 

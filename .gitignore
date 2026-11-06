@@ -17,3 +17,5 @@ backend/artifacts/*
 !backend/artifacts/.gitkeep
 .pytest_cache/
 .runtime/
+office-lunch/build-info.json
+backend/build-info.json

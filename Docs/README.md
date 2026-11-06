@@ -1,5 +1,7 @@
 # Tài liệu OfficeLunch
 
+- [Version theo commit](Versioning.md): mã bản build trên FE/API và quy trình build/deploy.
+
 - [Teradata](Teradata.md): SQL, kiến trúc và sandbox.
 - [Qdrant](Qdrant.md): vector và vai trò trong ứng dụng.
 - [Backend/API](API.md): endpoint, lỗi và trạng thái đồng bộ.

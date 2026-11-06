@@ -15,6 +15,7 @@ from .db import session, trace, dumps, close_pool
 from .models import DishInput, MealInput, ProfilePatch, Recommend, MealPatch
 from .config import qclient
 from .vector import model
+from .build import BUILD_INFO
 
 
 @asynccontextmanager
@@ -74,7 +75,12 @@ async def query_trace(req, call_next):
 @app.get("/api/health")
 @app.get("/api/health/live")
 async def live():
-    return dict(status="ok", dataMode="database")
+    return dict(status="ok", dataMode="database", build=BUILD_INFO)
+
+
+@app.get("/api/version")
+async def version():
+    return JSONResponse(BUILD_INFO, headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/health/ready")

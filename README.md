@@ -16,7 +16,7 @@ Yêu cầu Docker Compose v2 và quyền truy cập Tailscale sandbox.
 ```bash
 cp .env.example .env # chỉ khi chưa có .env
 # Điền TERADATA_USER, TERADATA_PASSWORD, QDRANT_API_KEY từ sandbox qua kênh riêng.
-docker compose build api office-lunch
+make build # tự đưa Git commit vào version FE/API
 docker compose run --rm api python -m ol.cli migrate
 docker compose run --rm api python -m ol.cli import-food
 docker compose up -d api office-lunch

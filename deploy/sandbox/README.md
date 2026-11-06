@@ -49,18 +49,12 @@ git pull --ff-only origin main
 PYTHONPATH="$PWD/backend" OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
   backend/.venv/bin/python -m pytest backend/tests -q
 
-export PATH=/Users/gper/.nvm/versions/node/v22.23.3/bin:$PATH
-export npm_config_cache="$PWD/.runtime/npm-cache"
-cd office-lunch
-npm ci
-BACKEND_URL=http://127.0.0.1:8002 NEXT_TELEMETRY_DISABLED=1 npm run build
-mkdir -p .next/standalone/.next
-cp -R .next/static .next/standalone/.next/
-cp -R public .next/standalone/
+/bin/bash deploy/sandbox/build.sh
 ```
 
 Proxy endpoint được cố định lúc build. Standalone cần cả `.next/static` và
 `public`; `run-service.sh frontend` chạy `server.js` bằng Node native.
+Helper build tự ghi commit/thời điểm lên FE và API; xem [Versioning](../../Docs/Versioning.md).
 
 ## Supervisor
 

@@ -21,6 +21,9 @@ truy cập trong sản phẩm công khai.
 - `GET /benchmarks`, `GET /benchmarks/{runId}`: summary benchmark đã hoàn tất.
 - `GET /weather?city=hcm|hn|dn`: Open-Meteo; response ghi rõ fallback khi lỗi.
 - `GET /health/live`, `GET /health/ready`: process và dependencies/model.
+- `GET /version`: commit/version/thời điểm build, không cần database, no-store.
+  Liveness có thêm `build` cùng nội dung. FE riêng có `/build-info` để đối chiếu
+  artifact frontend với API; xem [Versioning](Versioning.md).
 
 400 cho input sai, 404 cho không tồn tại/không thuộc user, 409 khi trùng ID hoặc
 xóa món đang có lịch sử, 503 khi dependency/model không sẵn sàng. DELETE thành

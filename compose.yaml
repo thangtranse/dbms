@@ -4,6 +4,9 @@ services:
   office-lunch:
     build:
       context: ./office-lunch
+      args:
+        BUILD_COMMIT: "${BUILD_COMMIT:-unknown}"
+        BUILD_DIRTY: "${BUILD_DIRTY:-false}"
     image: dbms/office-lunch:local
     restart: unless-stopped
     ports:
@@ -26,7 +29,11 @@ services:
       - databases
 
   api: &backend
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        BUILD_COMMIT: "${BUILD_COMMIT:-unknown}"
+        BUILD_DIRTY: "${BUILD_DIRTY:-false}"
     image: dbms/office-lunch-api:local
     restart: unless-stopped
     env_file: .env

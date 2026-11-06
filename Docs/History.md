@@ -144,6 +144,23 @@ Trạng thái kiểm thử và vận hành cuối cùng được ghi tại [Resu
   `http://127.0.0.1:18300`; API vẫn đi qua `/api` của FE. Chưa tạo hoặc thay đổi
   tunnel/domain Cloudflare. SSH tunnel local 13002 đã trỏ lại cổng mới.
 
+## 2026-11-06 — Đồng bộ commit mới và thêm version build
+
+- Người dùng xác nhận stash các thay đổi sandbox, đồng bộ, commit/push phần
+  version rồi triển khai. Repo thực tế có main, không có master; upstream mới
+  tại thời điểm preflight là `b3866f25885eb72e9c27a3026cf1edaa46a21963`.
+- 19 file chưa commit trên sandbox đều khớp nội dung commit đó. Đã giữ nguyên
+  trong stash `127a0e75b7b51010cb8aeb6a525d4aa8ef1d0bd2`, không drop/apply;
+  checkout pull fast-forward từ 5e5c85d tới b3866f2.
+- Bổ sung mã commit/thời điểm build trên thanh đầu FE, `/build-info`, API
+  `/api/version` và liveness. Native build helper chia sẻ cùng metadata FE/API;
+  Make/Compose truyền SHA cho Docker. Source chưa commit mang hậu tố dirty,
+  thiếu Git/build arg báo unknown.
+- Build FE/lint/type local qua; 2 Node tests version qua, backend offline
+  15 passed/3 live tests skipped. Bản ghi rollout và kiểm tra sau restart được
+  lưu tại `.runtime/deployments/<commit>.json` của checkout sandbox để giữ
+  working tree sạch và version khớp artifact. Xem [Versioning](Versioning.md).
+
 ## Vị trí và cách đối chiếu
 
 | Thành phần | Vị trí |

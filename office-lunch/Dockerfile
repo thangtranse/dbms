@@ -4,6 +4,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 FROM dependencies AS build
+ARG BUILD_COMMIT=unknown
+ARG BUILD_DIRTY=false
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY . .
 RUN npm run build
