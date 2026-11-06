@@ -33,6 +33,8 @@ test("build identity follows the actual Git commit and marks uncommitted source"
 test("builds without Git use explicit metadata or say unknown", () => {
   const cwd = mkdtempSync(join(tmpdir(), "lunch-no-git-"));
   try {
+    // TMPDIR can be inside a checkout on sandbox; prevent discovery of its parent repo.
+    writeFileSync(join(cwd, ".git"), `gitdir: ${join(cwd, "missing-git")}\n`);
     assert.equal(createBuildInfo({ cwd, env: {} }).version, "unknown");
     assert.equal(createBuildInfo({ cwd, env: { BUILD_COMMIT: "a".repeat(40), BUILD_DIRTY: "true" } }).version, "a".repeat(12) + "-dirty");
     assert.throws(() => createBuildInfo({ cwd, env: { BUILD_COMMIT: "fake" } }), /full Git SHA/);
