@@ -13,6 +13,7 @@ type Draft = { itemId: string; name: string; categoryId: number; price: string; 
 const empty: Draft = { itemId: "", name: "", categoryId: 0, price: "", tags: "", image: "" };
 
 const pageSize = 25;
+type DishSort = "default" | "price-asc" | "price-desc";
 
 export default function DishesPage() {
   const { data, reload } = useFetch<{ categories: Cluster[]; dishes: Dish[] }>("/api/clusters");
@@ -20,6 +21,8 @@ export default function DishesPage() {
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<number | "all">("all");
+  const [tag, setTag] = useState("");
+  const [sort, setSort] = useState<DishSort>("default");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +31,21 @@ export default function DishesPage() {
   const clusters = data?.categories ?? [];
   const total = data?.dishes.length ?? 0;
   const named = (data?.dishes ?? []).filter((d) => d.source !== "unmapped" && !d.name.startsWith("Item #")).length;
+  const tagQuery = tag.trim().toLowerCase();
   const rows = (data?.dishes ?? [])
     .filter((d) => filter === "all" || d.categoryId === filter)
     .filter((d) => `${d.name} ${d.itemId}`.toLowerCase().includes(q.toLowerCase()))
-    .sort((a, b) => (a.categoryId ?? 99) - (b.categoryId ?? 99) || a.name.localeCompare(b.name, "vi"));
+    .filter((d) => !tagQuery || d.tags.some((value) => value.toLowerCase().includes(tagQuery)))
+    .sort((a, b) => {
+      if (sort !== "default") {
+        const missingPriceOrder = Number(a.price <= 0) - Number(b.price <= 0);
+        if (missingPriceOrder) return missingPriceOrder;
+        if (a.price > 0 && a.price !== b.price) {
+          return sort === "price-asc" ? a.price - b.price : b.price - a.price;
+        }
+      }
+      return (a.categoryId ?? 99) - (b.categoryId ?? 99) || a.name.localeCompare(b.name, "vi");
+    });
 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const currentPage = Math.min(page, pageCount);
@@ -148,11 +162,11 @@ export default function DishesPage() {
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap gap-3">
-        <input id="dish-search" className={`${input} sm:max-w-xs`} placeholder="Tìm theo tên hoặc mã…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <input id="dish-search" className={input} placeholder="Tìm theo tên hoặc mã…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
         <select
           id="dish-filter"
-          className={`${input} sm:max-w-xs`}
+          className={input}
           value={filter}
           onChange={(e) => {
             setFilter(e.target.value === "all" ? "all" : Number(e.target.value));
@@ -161,6 +175,26 @@ export default function DishesPage() {
         >
           <option value="all">Tất cả cụm</option>
           {clusters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <input
+          id="dish-tag-search"
+          type="search"
+          aria-label="Tìm theo tag"
+          className={input}
+          placeholder="Tìm theo tag…"
+          value={tag}
+          onChange={(e) => { setTag(e.target.value); setPage(1); }}
+        />
+        <select
+          id="dish-sort"
+          aria-label="Sắp xếp món"
+          className={input}
+          value={sort}
+          onChange={(e) => { setSort(e.target.value as DishSort); setPage(1); }}
+        >
+          <option value="default">Sắp xếp mặc định</option>
+          <option value="price-asc">Giá thấp đến cao</option>
+          <option value="price-desc">Giá cao đến thấp</option>
         </select>
       </div>
 
