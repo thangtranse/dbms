@@ -83,9 +83,10 @@ export default function HistoryPage() {
                 <div className="font-medium">{ds.map((d) => d.name).join(" + ") || "—"}</div>
                 {m.vectorStatus === "pending" && <p className="text-xs text-muted">Đã lưu · đang đồng bộ gợi ý</p>}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  {[...new Set(ds.map((d) => d.clusterId))].map((c) =>
-                    meta.data ? <ClusterPill key={c} name={meta.data.clusters[c].name} color={meta.data.clusters[c].color} /> : null,
-                  )}
+                  {[...new Set(ds.map((d) => d.clusterId))].map((id) => {
+                    const cluster = meta.data?.clusters.find((c) => c.id === id);
+                    return cluster ? <ClusterPill key={id} name={cluster.name} color={cluster.color} /> : null;
+                  })}
                   <code className="overflow-x-auto whitespace-pre font-mono text-xs text-muted">
                     {toTransactionLine(m.label, m.itemIds)}
                   </code>
