@@ -1,4 +1,5 @@
 from contextlib import closing
+from secrets import randbelow
 import time
 import uuid
 from datetime import date, timedelta
@@ -7,6 +8,7 @@ from fastapi import HTTPException
 from qdrant_client import models as qm
 from .db import session, dumps
 from .ingest import enqueue
+from .models import MAX_DISH_ID
 from .config import qclient
 from .vector import dish_vector, model, qlog
 
@@ -56,13 +58,30 @@ def validate_items(db, ids):
 
 def put_dish(body, item_id=None):
     d = body.model_dump()
-    i = d["itemId"]
-    if item_id is not None and item_id != i:
+    supplied_id = d["itemId"]
+    if item_id is not None and supplied_id is not None and item_id != supplied_id:
         fail(400, "Không được thay đổi itemId")
+    i = item_id if item_id is not None else supplied_id
     with session() as db:
-        existing = db.docs("dishes", "WHERE item_id=?", [i])
-        if item_id is None and existing:
-            fail(409, "Mã món đã tồn tại")
+        if item_id is None:
+            table = db.table("dishes")
+            for _ in range(10):
+                candidate = supplied_id if supplied_id is not None else randbelow(MAX_DISH_ID) + 1
+                # Hold the write lock until insert and outbox commit together.
+                if not db.execute(
+                    f"LOCKING TABLE {table} FOR WRITE SELECT item_id FROM {table} WHERE item_id=?",
+                    [candidate],
+                ):
+                    i = candidate
+                    break
+                if supplied_id is not None:
+                    fail(409, "Mã món đã tồn tại")
+            else:
+                fail(503, "Chưa cấp được mã món, vui lòng thử lại")
+            existing = []
+        else:
+            existing = db.docs("dishes", "WHERE item_id=?", [i])
+        d["itemId"] = i
         if item_id is not None and (not existing or existing[0].get("deleted")):
             fail(404, "Không tìm thấy món")
         old = existing[0] if existing else {}

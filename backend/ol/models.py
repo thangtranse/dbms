@@ -20,8 +20,11 @@ class Context(Input):
     groupSize: int = Field(default=1, ge=1, le=20)
 
 
+MAX_DISH_ID = 2147483647
+
+
 class DishInput(Input):
-    itemId: int = Field(gt=0, le=2147483647)
+    itemId: int | None = Field(default=None, gt=0, le=MAX_DISH_ID)
     name: str = Field(min_length=1, max_length=200)
     price: int = Field(ge=0, le=100000000)
     categoryId: int = Field(default=0, ge=0, le=6)

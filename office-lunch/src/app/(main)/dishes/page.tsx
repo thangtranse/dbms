@@ -9,8 +9,8 @@ import { formatPrice } from "@/lib/labels";
 import type { Cluster, Dish } from "@/lib/types";
 
 
-type Draft = { itemId: string; name: string; categoryId: number; price: string; tags: string; image: string };
-const empty: Draft = { itemId: "", name: "", categoryId: 0, price: "", tags: "", image: "" };
+type Draft = { name: string; categoryId: number; price: string; tags: string; image: string };
+const empty: Draft = { name: "", categoryId: 0, price: "", tags: "", image: "" };
 
 const pageSize = 25;
 type DishSort = "default" | "price-asc" | "price-desc";
@@ -60,20 +60,19 @@ export default function DishesPage() {
 
   function edit(d: Dish) {
     setEditingId(d.itemId);
-    setDraft({ itemId: String(d.itemId), name: d.name, categoryId: d.categoryId ?? 0, price: String(d.price), tags: d.tags.join(", "), image: d.image });
+    setDraft({ name: d.name, categoryId: d.categoryId ?? 0, price: String(d.price), tags: d.tags.join(", "), image: d.image });
   }
 
   async function save() {
     if (!draft) return;
     const body = {
-      itemId: Number(draft.itemId),
       name: draft.name.trim(),
       categoryId: draft.categoryId,
       price: Number(draft.price),
       tags: draft.tags.split(",").map((t) => t.trim()).filter(Boolean),
       image: draft.image.trim().split("?")[0],
     };
-    if (!body.itemId || !body.name || !body.price) return setError("Cần nhập mã món, tên món và giá.");
+    if (!body.name || !body.price) return setError("Cần nhập tên món và giá.");
     try {
       if (editingId) await api.put(`/api/dishes/${editingId}`, body);
       else await api.post("/api/dishes", body); // toạ độ thật do backend tính lại
@@ -132,7 +131,6 @@ export default function DishesPage() {
         <div className={`${card} mb-6 flex flex-col gap-4 p-5`}>
           <h2 className="text-lg font-semibold">{editingId ? `Sửa món #${editingId}` : "Thêm món"}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {field("itemId", "Mã món (item_id)", { inputMode: "numeric", disabled: !!editingId })}
             {field("name", "Tên món")}
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="text-muted">Cụm</span>
