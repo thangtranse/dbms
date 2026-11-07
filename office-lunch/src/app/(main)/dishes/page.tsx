@@ -27,6 +27,7 @@ export default function DishesPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const clusters = data?.categories ?? [];
   const total = data?.dishes.length ?? 0;
@@ -86,9 +87,14 @@ export default function DishesPage() {
   }
 
   async function remove(id: number) {
-    await api.del(`/api/dishes/${id}`);
-    setConfirmId(null);
-    reload();
+    setDeleteError("");
+    try {
+      await api.del(`/api/dishes/${id}`);
+      setConfirmId(null);
+      reload();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Không xoá được món.");
+    }
   }
 
   const field = (k: keyof Draft, label: string, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
@@ -232,14 +238,17 @@ export default function DishesPage() {
                 <td className="px-4 py-2.5 text-muted">{d.tags.join(", ")}</td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-right">
                   {confirmId === d.itemId ? (
-                    <span className="inline-flex gap-2">
-                      <Button variant="danger" onClick={() => remove(d.itemId)}>Xoá thật</Button>
-                      <Button onClick={() => setConfirmId(null)}>Không</Button>
-                    </span>
+                    <div>
+                      <span className="inline-flex gap-2">
+                        <Button variant="danger" onClick={() => remove(d.itemId)}>Xoá thật</Button>
+                        <Button onClick={() => setConfirmId(null)}>Không</Button>
+                      </span>
+                      {deleteError && <p role="alert" className="mt-1 whitespace-normal text-xs text-bad">{deleteError}</p>}
+                    </div>
                   ) : (
                     <span className="inline-flex gap-2">
                       <Button onClick={() => edit(d)}>Sửa</Button>
-                      <Button variant="danger" onClick={() => setConfirmId(d.itemId)}>Xoá</Button>
+                      <Button variant="danger" onClick={() => { setDeleteError(""); setConfirmId(d.itemId); }}>Xoá</Button>
                     </span>
                   )}
                 </td>
