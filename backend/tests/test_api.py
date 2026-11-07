@@ -73,3 +73,16 @@ def test_readiness_distinguishes_model_and_qdrant_failure(monkeypatch):
         monkeypatch.setattr(api.model, "refresh", missing)
         r = client.get("/api/health/ready")
         assert r.json()["checks"] == dict(teradata=True, model=False, qdrant=True)
+
+
+def test_avoid_tags_match_catalog_aliases_and_normalized_spellings():
+    from ol.service import avoid_tag_values
+
+    catalog = [
+        {"tags": ["Thịt bò", "Món thịt bò", "bò", "thịt gà"]},
+        {"tags": ["ĐẬU PHỘNG", "lạc rang", "lạc"]},
+    ]
+    assert avoid_tag_values([" BÒ ", "Peanuts"], catalog) == {
+        " BÒ ", "Peanuts", "Thịt bò", "Món thịt bò", "bò", "ĐẬU PHỘNG", "lạc",
+    }
+    assert avoid_tag_values([], catalog) == set()

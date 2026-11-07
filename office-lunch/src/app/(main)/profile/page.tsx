@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const meta = useFetch<{ clusters: Cluster[]; dishes: Dish[] }>("/api/clusters");
   const [p, setP] = useState<UserProfile | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (data) setP(data.profile);
@@ -32,8 +33,13 @@ export default function ProfilePage() {
   const mains = (meta.data?.dishes ?? []).filter((d) => d.categoryId !== null && d.categoryId !== 6);
 
   async function save() {
-    await api.put("/api/profile", { name: p!.name, team: p!.team, diet: p!.diet, avoid: p!.avoid, spicy: p!.spicy, budget: p!.budget, likedItemIds: p!.likedItemIds });
-    setSaved(true);
+    setSaveError("");
+    try {
+      await api.put("/api/profile", { name: p!.name, team: p!.team, diet: p!.diet, avoid: p!.avoid, spicy: p!.spicy, budget: p!.budget, likedItemIds: p!.likedItemIds });
+      setSaved(true);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Không lưu được khẩu vị.");
+    }
   }
 
   return (
@@ -41,6 +47,8 @@ export default function ProfilePage() {
       <PageHead title="Khẩu vị của bạn" sub={`${p.name} · ${p.team}`}>
         <Button variant="primary" onClick={save}>{saved ? "Đã lưu" : "Lưu khẩu vị"}</Button>
       </PageHead>
+
+      {saveError && <p role="alert" className="mb-4 text-sm text-bad">{saveError}</p>}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className={`${card} flex flex-col gap-5 p-5`}>

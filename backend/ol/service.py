@@ -2,6 +2,7 @@ from contextlib import closing
 from secrets import randbelow
 import time
 import uuid
+from unicodedata import normalize
 from datetime import date, timedelta
 import numpy as np
 from fastapi import HTTPException
@@ -238,6 +239,32 @@ def stats(db, uid):
     )
 
 
+AVOID_TAG_ALIASES = (
+    ("bò", "thịt bò", "món thịt bò", "beef"),
+    ("gà", "thịt gà", "món gà", "chicken"),
+    ("heo", "lợn", "thịt heo", "thịt lợn", "món thịt heo", "món thịt lợn", "pork"),
+    ("đậu phộng", "lạc", "peanut", "peanuts"),
+    ("trứng", "quả trứng", "egg", "eggs"),
+    ("hải sản", "seafood"),
+)
+
+
+def avoid_tag_values(selected, catalog):
+    def key(tag):
+        return " ".join(normalize("NFC", tag).casefold().split())
+
+    if not selected:
+        return set()
+    blocked = {key(tag) for tag in selected}
+    for aliases in AVOID_TAG_ALIASES:
+        if blocked.intersection(aliases):
+            blocked.update(aliases)
+    # Include actual spellings because Qdrant keyword matches are case-sensitive.
+    return set(selected) | {
+        tag for dish in catalog for tag in dish["tags"] if key(tag) in blocked
+    }
+
+
 def recommendations(db, uid, body):
     model.refresh()
     with closing(qclient()) as q:
@@ -293,9 +320,9 @@ def _recommendations(db, uid, body, q):
     must.append(
         qm.FieldCondition(key="price", range=qm.Range(gte=min_price, lte=max_price))
     )
-    avoid = list({a for m in members for a in m["avoid"]})
+    avoid = avoid_tag_values([tag for m in members for tag in m["avoid"]], catalog.values())
     if avoid:
-        must_not.append(qm.FieldCondition(key="tags", match=qm.MatchAny(any=avoid)))
+        must_not.append(qm.FieldCondition(key="tags", match=qm.MatchAny(any=sorted(avoid))))
     tags = []
     if any(m["diet"] == "chay" for m in members):
         tags.append("chay")
@@ -369,7 +396,7 @@ def _recommendations(db, uid, body, q):
         if (
             dish["price"] < min_price
             or (max_price is not None and dish["price"] > max_price)
-            or set(dish["tags"]) & set(avoid)
+            or avoid.intersection(dish["tags"])
             or not set(tags) <= set(dish["tags"])
             or dish["categoryId"] == 6
         ):
@@ -400,7 +427,7 @@ def _recommendations(db, uid, body, q):
         drink = None
         if rules and rules[0][0] in catalog:
             candidate = catalog[rules[0][0]]
-            if not set(candidate["tags"]) & set(avoid):
+            if not avoid.intersection(candidate["tags"]):
                 drink = dict(dish=candidate, confidence=float(rules[0][1]))
         result.append(
             dict(
