@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DishImage } from "@/components/dish-image";
 import { Button, ClusterPill, PageHead, card, input } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -12,8 +12,12 @@ import type { Cluster, Dish } from "@/lib/types";
 type Draft = { itemId: string; name: string; categoryId: number; price: string; tags: string; image: string };
 const empty: Draft = { itemId: "", name: "", categoryId: 0, price: "", tags: "", image: "" };
 
+const pageSize = 25;
+
 export default function DishesPage() {
   const { data, reload } = useFetch<{ categories: Cluster[]; dishes: Dish[] }>("/api/clusters");
+  const listRef = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<number | "all">("all");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -28,6 +32,17 @@ export default function DishesPage() {
     .filter((d) => filter === "all" || d.categoryId === filter)
     .filter((d) => `${d.name} ${d.itemId}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => (a.categoryId ?? 99) - (b.categoryId ?? 99) || a.name.localeCompare(b.name, "vi"));
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const offset = (currentPage - 1) * pageSize;
+  const pageRows = rows.slice(offset, offset + pageSize);
+
+  function goToPage(nextPage: number) {
+    setPage(nextPage);
+    setConfirmId(null);
+    listRef.current?.scrollIntoView({ block: "start" });
+  }
 
   function edit(d: Dish) {
     setEditingId(d.itemId);
@@ -134,19 +149,22 @@ export default function DishesPage() {
       )}
 
       <div className="mb-4 flex flex-wrap gap-3">
-        <input id="dish-search" className={`${input} sm:max-w-xs`} placeholder="Tìm theo tên hoặc mã…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input id="dish-search" className={`${input} sm:max-w-xs`} placeholder="Tìm theo tên hoặc mã…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
         <select
           id="dish-filter"
           className={`${input} sm:max-w-xs`}
           value={filter}
-          onChange={(e) => setFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
+          onChange={(e) => {
+            setFilter(e.target.value === "all" ? "all" : Number(e.target.value));
+            setPage(1);
+          }}
         >
           <option value="all">Tất cả cụm</option>
           {clusters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
 
-      <div className={`${card} overflow-x-auto`}>
+      <div ref={listRef} className={`${card} overflow-x-auto`}>
         <table className="w-full min-w-[40rem] text-sm">
           <thead className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
             <tr>
@@ -159,7 +177,10 @@ export default function DishesPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((d) => (
+            {data && pageRows.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted">Không tìm thấy món.</td></tr>
+            )}
+            {pageRows.map((d) => (
               <tr key={d.itemId} className="border-b border-line last:border-0">
                 <td className="px-4 py-2.5 font-mono text-muted">{d.itemId}</td>
                 <td className="px-4 py-2.5 font-medium">
@@ -195,6 +216,18 @@ export default function DishesPage() {
           </tbody>
         </table>
       </div>
+      {rows.length > 0 && (
+        <nav aria-label="Phân trang danh sách món" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+          <p className="text-muted" aria-live="polite">
+            Hiển thị {offset + 1}–{offset + pageRows.length} / {rows.length} món
+          </p>
+          <div className="flex items-center gap-2">
+            <Button disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>Trang trước</Button>
+            <span className="tabular-nums">Trang {currentPage} / {pageCount}</span>
+            <Button disabled={currentPage === pageCount} onClick={() => goToPage(currentPage + 1)}>Trang sau</Button>
+          </div>
+        </nav>
+      )}
     </>
   );
 }
