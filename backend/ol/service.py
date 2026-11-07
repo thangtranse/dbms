@@ -8,7 +8,7 @@ from qdrant_client import models as qm
 from .db import session, dumps
 from .ingest import enqueue
 from .config import qclient
-from .vector import model, qlog
+from .vector import dish_vector, model, qlog
 
 
 def fail(code, message):
@@ -238,12 +238,22 @@ def _recommendations(db, uid, body, q):
         )[:20]
         for meal in history:
             (positives if meal["label"] == "yes" else negatives).extend(meal["itemIds"])
+
+    def preference_vector(item_id):
+        if item_id in model.items:
+            return model.items[item_id]["vector"]
+        dish = catalog.get(item_id)
+        if dish and dish["vectorStatus"] == "synced":
+            return dish_vector(model.items, dish, catalog.values())
+        return None
+
     vectors = [
-        model.items[i]["vector"]
+        vector
         for i in positives
-        if i in model.items and catalog.get(i, {}).get("categoryId") != 6
+        if catalog.get(i, {}).get("categoryId") != 6
+        if (vector := preference_vector(i)) is not None
     ]
-    neg = [model.items[i]["vector"] for i in negatives if i in model.items]
+    neg = [vector for i in negatives if (vector := preference_vector(i)) is not None]
     query = np.mean(vectors, axis=0) if vectors else None
     if query is not None and neg:
         query = query - 0.25 * np.mean(neg, axis=0)
@@ -291,7 +301,9 @@ def _recommendations(db, uid, body, q):
             model.active["dishes"], scroll_filter=filt, limit=2000, with_payload=True
         )[0]
         allowed = {int(p.id) for p in points}
-        ranked = [(int(i), None) for i, _ in counts if i in allowed][: body.limit]
+        popular = [int(i) for i, _ in counts if i in allowed]
+        ordered = popular + sorted(allowed.difference(popular))
+        ranked = [(i, None) for i in ordered[: body.limit]]
     else:
         query = query / np.linalg.norm(query)
         t = time.perf_counter()
@@ -343,10 +355,13 @@ def _recommendations(db, uid, body, q):
             or dish["categoryId"] == 6
         ):
             continue
+        vector = preference_vector(i)
+        if vector is None:
+            continue
         t = time.perf_counter()
         near = q.query_points(
             model.active["transactions"],
-            query=model.items[i]["vector"].tolist(),
+            query=vector.tolist(),
             limit=15,
             with_payload=True,
         ).points

@@ -98,3 +98,20 @@ def test_delete_tombstone_is_applied(monkeypatch):
     client = Client()
     setup(monkeypatch, db, client)
     assert vector.sync_once() == 1 and client.called and db.applied == 1
+
+
+def test_new_dish_vector_uses_trained_neighbors_and_matching_tags():
+    items = {
+        1: {"vector": np.array([1.0, 0.0])},
+        2: {"vector": np.array([0.0, 1.0])},
+        3: {"vector": np.array([-1.0, 0.0])},
+    }
+    catalog = [
+        dict(itemId=1, categoryId=0, tags=["Nóng"]),
+        dict(itemId=2, categoryId=0, tags=["lạnh"]),
+        dict(itemId=3, categoryId=1, tags=["nóng"]),
+    ]
+    dish = dict(itemId=4, categoryId=0, tags=["nóng"])
+    expected = np.array([2.0, 1.0]) / np.sqrt(5)
+    np.testing.assert_allclose(vector.dish_vector(items, dish, catalog), expected)
+    assert vector.dish_vector(items, {**dish, "categoryId": 6}, catalog) is None

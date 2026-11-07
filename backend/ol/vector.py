@@ -80,6 +80,30 @@ class Model:
 model = Model()
 
 
+def dish_vector(items, dish, catalog):
+    trained = items.get(dish["itemId"])
+    if trained is not None:
+        return trained["vector"]
+
+    tags = {tag.casefold() for tag in dish["tags"]}
+    neighbors = []
+    weights = []
+    for candidate in catalog:
+        if candidate["categoryId"] != dish["categoryId"]:
+            continue
+        trained = items.get(candidate["itemId"])
+        if trained is None or not np.linalg.norm(trained["vector"]):
+            continue
+        overlap = tags.intersection(tag.casefold() for tag in candidate["tags"])
+        neighbors.append(trained["vector"])
+        weights.append(1 + len(overlap))
+    if not neighbors:
+        return None
+    vector = np.average(neighbors, axis=0, weights=weights)
+    norm = np.linalg.norm(vector)
+    return vector / norm if norm else None
+
+
 def activate(run_id, seed=0):
     from .pipeline import write_json
 
@@ -254,13 +278,19 @@ def sync_once():
                     q.delete(collection, qm.PointIdsList(points=[pid]), wait=True)
                 else:
                     doc = docs[0]
-                    vector = (
-                        model.items.get(entity_id, {}).get("vector")
-                        if kind == "dish"
-                        else model.infer(doc["itemIds"])
-                    )
+                    if kind == "dish":
+                        references = []
+                        if entity_id not in model.items:
+                            with session() as db:
+                                references = db.docs(
+                                    "dishes", "WHERE active_flag=1 AND category_id=? ORDER BY item_id",
+                                    [doc["categoryId"]],
+                                )
+                        vector = dish_vector(model.items, doc, references)
+                    else:
+                        vector = model.infer(doc["itemIds"])
                     if vector is None or not np.linalg.norm(vector):
-                        # Keep pending until a model knows this item; do not publish random vectors.
+                        # Keep pending when the model has no usable reference.
                         with session() as db:
                             db.execute(
                                 f"UPDATE {db.table('outbox')} SET attempts=attempts+1 WHERE entity_id=? AND revision=?",
