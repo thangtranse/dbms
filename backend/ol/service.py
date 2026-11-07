@@ -253,13 +253,17 @@ def _recommendations(db, uid, body, q):
         qm.FieldCondition(key="modelVersion", match=qm.MatchValue(value=model.version)),
     ]
     must.append(qm.FieldCondition(key="mapped", match=qm.MatchValue(value=True)))
-    must.append(qm.FieldCondition(key="price", range=qm.Range(gt=0)))
     must_not = [qm.FieldCondition(key="categoryId", match=qm.MatchValue(value=6))]
     if body.exclude:
         must_not.append(qm.HasIdCondition(has_id=body.exclude))
-    budget = {"duoi-35": 35000, "35-50": 50000, "tren-50": None}[ctx.budget]
-    if budget:
-        must.append(qm.FieldCondition(key="price", range=qm.Range(lte=budget)))
+    min_price, max_price = {
+        "duoi-35": (1, 34999),
+        "35-50": (35000, 50000),
+        "tren-50": (50001, None),
+    }[ctx.budget]
+    must.append(
+        qm.FieldCondition(key="price", range=qm.Range(gte=min_price, lte=max_price))
+    )
     avoid = list({a for m in members for a in m["avoid"]})
     if avoid:
         must_not.append(qm.FieldCondition(key="tags", match=qm.MatchAny(any=avoid)))
@@ -332,8 +336,8 @@ def _recommendations(db, uid, body, q):
             continue
         # Revalidate against authoritative SQL metadata while outbox may be pending.
         if (
-            dish["price"] <= 0
-            or (budget is not None and dish["price"] > budget)
+            dish["price"] < min_price
+            or (max_price is not None and dish["price"] > max_price)
             or set(dish["tags"]) & set(avoid)
             or not set(tags) <= set(dish["tags"])
             or dish["categoryId"] == 6

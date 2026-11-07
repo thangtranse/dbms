@@ -23,7 +23,7 @@ export default function DishesPage() {
 
   const clusters = data?.categories ?? [];
   const total = data?.dishes.length ?? 0;
-  const complete = (data?.dishes ?? []).filter(d => d.source !== "unmapped" && !d.name.startsWith("Item #") && d.image && d.tags.length > 0).length;
+  const named = (data?.dishes ?? []).filter((d) => d.source !== "unmapped" && !d.name.startsWith("Item #")).length;
   const rows = (data?.dishes ?? [])
     .filter((d) => filter === "all" || d.categoryId === filter)
     .filter((d) => `${d.name} ${d.itemId}`.toLowerCase().includes(q.toLowerCase()))
@@ -89,13 +89,13 @@ export default function DishesPage() {
 
       <div className={`${card} mb-6 flex flex-col gap-2 p-4`}>
         <div className="flex items-baseline justify-between text-sm">
-          <span>Có tên, ảnh và tag</span>
+          <span>Đã gán tên</span>
           <span className="tabular-nums text-muted">
-            <b className="text-ink">{complete}</b> / {total} mã món
+            <b className="text-ink">{named}</b> / {total} mã món
           </span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-surface-2">
-          <div className="h-full bg-accent" style={{ width: `${(total ? complete / total : 0) * 100}%` }} />
+          <div className="h-full bg-accent" style={{ width: `${(total ? named / total : 0) * 100}%` }} />
         </div>
       </div>
 

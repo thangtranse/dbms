@@ -33,7 +33,14 @@ export default function HomePage() {
   }, [city]);
 
   useEffect(() => {
-    api.post<Recommendation[]>("/api/recommend", { context: ctx, exclude, limit: 4 }).then((r) => { setRecs(r); setError(null); }, (e: Error) => setError(e.message));
+    let current = true;
+    setRecs(null);
+    setError(null);
+    api.post<Recommendation[]>("/api/recommend", { context: ctx, exclude, limit: 4 }).then(
+      (result) => { if (current) setRecs(result); },
+      (error: Error) => { if (current) setError(error.message); },
+    );
+    return () => { current = false; };
   }, [ctx, exclude]);
 
   useEffect(() => {

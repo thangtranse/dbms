@@ -19,7 +19,7 @@ with httpx.Client(
         response = api.get("/api/profile", headers=headers)
         response.raise_for_status()
         profile = response.json()["profile"]
-        for budget, price_cap in [("duoi-35", 35000), ("35-50", 50000)]:
+        for budget, price_range in [("duoi-35", range(1, 35000)), ("35-50", range(35000, 50001)), ("tren-50", range(50001, 100000001))]:
             for break_time, mood in [(30, "gi-cung-duoc"), (15, "gi-cung-duoc"), (30, "healthy")]:
                 context = dict(
                     weather="mat", budget=budget, breakTime=break_time,
@@ -33,7 +33,7 @@ with httpx.Client(
                 scenarios += 1
                 for recommendation in result:
                     dish = recommendation["dish"]
-                    assert dish["price"] <= price_cap
+                    assert dish["price"] in price_range
                     assert dish["categoryId"] is not None and dish["categoryId"] != 6
                     assert not set(profile["avoid"]) & set(dish["tags"])
                     if profile["diet"] == "chay":
